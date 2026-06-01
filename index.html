@@ -828,6 +828,8 @@ function showLogin(){
   document.getElementById("loginView").classList.remove("hidden");
 }
 
+const API_BASE = "https://apparatus-api.vercel.app/api";
+
 function signup(){
   const user = {
     name: document.getElementById("signupName").value.trim(),
@@ -847,16 +849,25 @@ function signup(){
   msg.style.color = "#60a5fa";
   msg.textContent = "Creating account...";
 
-  google.script.run
-    .withSuccessHandler(result => {
-      msg.style.color = result.success ? "#4ade80" : "#f87171";
-      msg.textContent = result.message;
+  fetch(API_BASE + "/users", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      action: "signup",
+      ...user
     })
-    .withFailureHandler(error => {
-      msg.style.color = "#f87171";
-      msg.textContent = error.message;
-    })
-    .signupUser(user);
+  })
+  .then(res => res.json())
+  .then(result => {
+    msg.style.color = result.success ? "#4ade80" : "#f87171";
+    msg.textContent = result.message;
+  })
+  .catch(error => {
+    msg.style.color = "#f87171";
+    msg.textContent = error.message;
+  });
 }
 
 function login(){
@@ -873,23 +884,33 @@ function login(){
   msg.style.color = "#60a5fa";
   msg.textContent = "Logging in...";
 
-  google.script.run
-    .withSuccessHandler(result => {
-      if(!result.success){
-        msg.style.color = "#f87171";
-        msg.textContent = result.message;
-        return;
-      }
-
-      currentUser = result;
-      sessionStorage.setItem("currentUser", JSON.stringify(currentUser));
-      showDashboard();
+  fetch(API_BASE + "/users", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      action: "login",
+      username,
+      password
     })
-    .withFailureHandler(error => {
+  })
+  .then(res => res.json())
+  .then(result => {
+    if(!result.success){
       msg.style.color = "#f87171";
-      msg.textContent = error.message;
-    })
-    .loginUser(username, password);
+      msg.textContent = result.message;
+      return;
+    }
+
+    currentUser = result;
+    sessionStorage.setItem("currentUser", JSON.stringify(currentUser));
+    showDashboard();
+  })
+  .catch(error => {
+    msg.style.color = "#f87171";
+    msg.textContent = error.message;
+  });
 }
 
 function showDashboard(){
