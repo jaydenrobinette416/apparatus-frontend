@@ -926,12 +926,21 @@ function showDashboard(){
       `<button class="header-admin-btn" onclick="openAdmin()">Admin</button>`;
   }
 
-  google.script.run
-  .withSuccessHandler(showApparatus)
-  .getApparatusForBase(currentUser.base);
+  fetch(API_BASE + "/apparatus")
+  .then(res => res.json())
+  .then(data => {
 
-loadMessageBoardFromMongo();
-}
+    const units = (data.units || [])
+      .filter(u => u.base === currentUser.base)
+      .map(u => u.name);
+
+    showApparatus(units);
+
+  })
+  .catch(error => {
+    console.error(error);
+    showToast("Failed to load apparatus", "error");
+  });
 
 
 function loadMessageBoardFromMongo(){
